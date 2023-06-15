@@ -1,0 +1,47 @@
+{
+  "name": "givit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "npx prisma generate",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@joi/date": "^2.1.0",
+    "@prisma/client": "^2.30.3",
+    "axios": "^0.21.1",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "date-and-time": "^0.14.2",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "firebase-admin": "^9.11.1",
+    "flutterwave-node-v3": "^1.0.8",
+    "joi": "^17.4.2",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "mongoose": "^5.12.0",
+    "multer": "^1.4.2",
+    "node-cron": "^3.0.0",
+    "node-forge": "^0.10.0",
+    "nodemailer": "^6.5.0",
+    "random-number": "^0.0.9",
+    "sharp": "^0.29.0",
+    "socket.io": "^2.4.1",
+    "timediff": "^1.1.1",
+    "trim-request": "^1.0.6",
+    "twilio": "^3.59.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7",
+    "prisma": "^2.30.3"
+  },
+  "config": {
+    "unsafe-perm": true
+  }
+}

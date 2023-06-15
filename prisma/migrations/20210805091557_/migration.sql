@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "GiveAwaysStatus" ADD VALUE 'WINNERSELECTIONPENDING';

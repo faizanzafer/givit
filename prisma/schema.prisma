@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id                           String     @id @default(cuid())
+  name                         String?    @db.VarChar(150)
+  user_name                    String?    @db.VarChar(150)
+  email                        String?    @db.VarChar(150)
+  phone                        String     @db.VarChar(150)
+  bio                          String?    @db.VarChar(150)
+  dob                          String?    @db.VarChar(150)
+  gender                       String?    @db.VarChar(150)
+  rank                         UserRanks?
+  picture_url                  String?
+  bottom_bar_picture_url       String?
+  fcm_token                    String?
+  password                     String?    @db.VarChar(150)
+  social_auth_provider_user_id String?    @db.VarChar(150)
+  social_profiles              String?
+  subscription_limit           Int?
+  is_registered                Boolean   @default(false)
+  is_public                    Boolean   @default(true)
+  show_give_aways_amount       Boolean   @default(true)
+  login_attempts               Int       @default(0)
+  locked_at                    DateTime?
+  created_at                   DateTime  @default(now())
+  updated_at                   DateTime  @updatedAt
+
+  senders_messages                  ChannelMessages[]             @relation("sender")
+  receivers_messages                ChannelMessages[]             @relation("receiver")
+  followings                        FollowRequests[]              @relation("name1")
+  followers                         FollowRequests[]              @relation("name2")
+  give_aways_comments_likes         GiveAwayCommentLikes[]
+  give_aways_comments_replies       GiveAwayCommentReplies[]
+  give_aways_comments_replies_likes GiveAwayCommentRepliesLikes[]
+  give_aways_comments               GiveAwayComments[]
+  give_aways_likes                  GiveAwayLikes[]
+  subscribed_give_aways             GiveAwaySubscibers[]
+  give_aways                        GiveAways[]
+  GiveAwaysPendingPayment           GiveAwaysPendingPayment[]
+  primary_user_channels             UserChannel[]                 @relation("primary_user")
+  secondary_user_channels           UserChannel[]                 @relation("secondary_user")
+  users_i_blocked                   BlockedUsers[]                @relation("blocker_user")
+  users_blocked_me                  BlockedUsers[]                @relation("blocked_user")
+  user_bank                         UserBankAccount?
+  user_notification_management      UserNotificationManagement?
+  user_notifications                UserNotifications[]
+}
+
+model OtpVerify {
+  id              String   @id @default(cuid())
+  user_identifier String   @db.VarChar(150)
+  otp             Int
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model ResetPassword {
+  id              String   @id @default(cuid())
+  user_identifier String   @db.VarChar(150)
+  otp             Int
+  is_verified     Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model FollowRequests {
+  id           String            @id @default(cuid())
+  created_at   DateTime          @default(now())
+  updated_at   DateTime          @updatedAt
+  follower_id  String
+  following_id String
+  status       FollowingApproval @default(PENDING)
+  following    Users             @relation("name1", fields: [follower_id], references: [id])
+  follower     Users             @relation("name2", fields: [following_id], references: [id])
+}
+
+model GiveAways {
+  id                     String                       @id @default(cuid())
+  user_id                String
+  type                   GiveAwaysType                @default(CASH)
+  amount_per_person      Float
+  total_winners          Int
+  total_cost             Float
+  winner_selection_type  GiveAwaysWinnerSelectionType @default(AUTOMATIC)
+  status                 GiveAwaysStatus              @default(PAYMENTPENDING)
+  start_date_time        DateTime                     @default(now())
+  end_date_time          DateTime
+  complete_end_date_time String?
+  about                  String
+  is_response_required   Boolean                      @default(false)
+  twitter_restriction    Boolean                      @default(false)
+  payment_confirmed_at   DateTime                     @default(now())
+  created_at             DateTime                     @default(now())
+  updated_at             DateTime                     @updatedAt
+  user                   Users                        @relation(fields: [user_id], references: [id])
+
+  subscribers               GiveAwaySubscibers[]
+  comments                  GiveAwayComments[]
+  likes                     GiveAwayLikes[]
+  give_away_pending_payment GiveAwaysPendingPayment?
+}
+
+model GiveAwaySubscibers {
+  id            String   @id @default(cuid())
+  give_away_id  String
+  user_id       String
+  response      String?
+  is_winner     Boolean  @default(false)
+  amount_winned Float?
+  feed_back     String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  give_away  GiveAways @relation(references: [id], fields: [give_away_id])
+  subscriber Users     @relation(references: [id], fields: [user_id])
+}
+
+model GiveAwayLikes {
+  id           String    @id @default(cuid())
+  user_id      String
+  give_away_id String
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  give_away    GiveAways @relation(fields: [give_away_id], references: [id])
+  user         Users     @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, give_away_id], name: "user_give_away_like")
+}
+
+model GiveAwayComments {
+  id           String                   @id @default(cuid())
+  user_id      String
+  give_away_id String
+  comment      String
+  is_deleted   Boolean                  @default(false)
+  created_at   DateTime                 @default(now())
+  updated_at   DateTime                 @updatedAt
+  give_away    GiveAways                @relation(fields: [give_away_id], references: [id])
+  user         Users                    @relation(fields: [user_id], references: [id])
+  likes        GiveAwayCommentLikes[]
+  replies      GiveAwayCommentReplies[]
+}
+
+model GiveAwayCommentLikes {
+  id         String           @id @default(cuid())
+  user_id    String
+  comment_id String
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+  comment    GiveAwayComments @relation(fields: [comment_id], references: [id])
+  user       Users            @relation(fields: [user_id], references: [id])
+}
+
+model GiveAwayCommentReplies {
+  id         String                        @id @default(cuid())
+  user_id    String
+  comment_id String
+  reply      String
+  created_at DateTime                      @default(now())
+  updated_at DateTime                      @updatedAt
+  comment    GiveAwayComments              @relation(fields: [comment_id], references: [id])
+  user       Users                         @relation(fields: [user_id], references: [id])
+  likes      GiveAwayCommentRepliesLikes[]
+}
+
+model GiveAwayCommentRepliesLikes {
+  id         String                 @id @default(cuid())
+  user_id    String
+  reply_id   String
+  created_at DateTime               @default(now())
+  updated_at DateTime               @updatedAt
+  reply      GiveAwayCommentReplies @relation(fields: [reply_id], references: [id])
+  user       Users                  @relation(fields: [user_id], references: [id])
+}
+
+model GiveAwaysPendingPayment {
+  id           String    @id @default(cuid())
+  flw_ref      String    @db.VarChar(150)
+  user_id      String
+  give_away_id String
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  GiveAway     GiveAways @relation(fields: [give_away_id], references: [id])
+  Users        Users     @relation(fields: [user_id], references: [id])
+}
+
+model UserChannel {
+  id                              String            @id @default(cuid())
+  from_id                         String
+  to_id                           String
+  delete_conversation_for_from_id Boolean?          @default(false)
+  delete_conversation_for_to_id   Boolean?          @default(false)
+  created_at                      DateTime          @default(now())
+  updated_at                      DateTime          @updatedAt
+  primary_user                    Users             @relation("primary_user", fields: [from_id], references: [id])
+  secondary_user                  Users             @relation("secondary_user", fields: [to_id], references: [id])
+  channel_messages                ChannelMessages[]
+}
+
+model ChannelMessages {
+  id                String      @id @default(cuid())
+  from_id           String
+  to_id             String
+  users_channels_id String
+  message_body      String      @default("")
+  seen              Boolean?    @default(false)
+  message_type      MessageType @default(TEXT)
+  attachments       String?
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  sender            Users       @relation("sender", fields: [from_id], references: [id])
+  receiver          Users       @relation("receiver", fields: [to_id], references: [id])
+  usersChannelsId   UserChannel @relation(fields: [users_channels_id], references: [id])
+}
+
+model BlockedUsers {
+  id           String   @id @default(cuid())
+  blocker_id   String
+  blocked_id   String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  blocker_user Users    @relation("blocker_user", fields: [blocker_id], references: [id])
+  blocked_user Users    @relation("blocked_user", fields: [blocked_id], references: [id])
+}
+
+model UserBankAccount {
+  id             String   @id @default(cuid())
+  user_id        String
+  account_number String
+  account_bank   String
+  bank_name      String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  user           Users    @relation(fields: [user_id], references: [id])
+}
+
+model UserNotificationManagement {
+  id                     String   @id @default(cuid())
+  user_id                String
+  new_follower           Boolean  @default(true)
+  post_like              Boolean  @default(true)
+  post_comment_and_reply Boolean  @default(true)
+  new_giveaway           Boolean  @default(true)
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+  user                   Users    @relation(fields: [user_id], references: [id])
+}
+
+model UserNotifications {
+  id           String           @id @default(cuid())
+  user_id      String
+  type         NotificationType
+  notification String
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+  user         Users            @relation(fields: [user_id], references: [id])
+}
+
+enum GiveAwaysType {
+  CASH
+  AIRTIME
+}
+
+enum GiveAwaysStatus {
+  ACTIVE
+  PAYMENTPENDING
+  ENDED
+  WINNERSELECTIONPENDING
+}
+
+enum GiveAwaysWinnerSelectionType {
+  AUTOMATIC
+  MANUALLY
+}
+
+enum FollowingApproval {
+  PENDING
+  APPROVED
+  BLOCKED
+}
+
+enum MessageType {
+  TEXT
+  MEDIA
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  NEW_FOLLOWER_REQUEST
+  NEW_GIVEAWAY
+  MANUALL_GIVEAWAY_ENDED
+  AUTOMATIC_GIVEAWAY_ENDED
+  POST_LIKE
+  POST_COMMENT
+  POST_COMMENT_REPLY
+  WON_GIVEAWAY
+  WON_MONEY_TRANSFER
+  RANK_CHANGE
+  WINNER_FEEDBACK
+}
+
+enum UserRanks {
+  GOLD
+  SILVER
+  BRONZE
+}
